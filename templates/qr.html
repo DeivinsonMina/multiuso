@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tu Código QR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Tu Código QR</h1>
+        <img src="{{ qr_url }}" alt="Código QR generado">
+        <br>
+        <a href="{{ qr_url }}" download class="download-btn">Descargar QR</a>
+        <br>
+        <a href="{{ url_for('qr') }}" class="another-btn">Generar otro QR</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

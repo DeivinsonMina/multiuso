@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiuso - Herramientas Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Herramientas Multiuso</h1>
+        <p>Selecciona la herramienta que deseas utilizar:</p>
+        <div class="menu">
+            
+            <a href="{{ url_for('qr') }}" class="btn">Generador de Códigos QR</a>
+            <a href="{{ url_for('youtube_mp3') }}" class="btn">Descargar canciones de YouTube (mp3)</a>
+            <a href="{{ url_for('youtube_mp4') }}" class="btn">Descargar videos de YouTube (mp4)</a>
+            <a href="{{ url_for('tiktok') }}" class="btn">Descargar videos de TikTok</a>
+            <a href="{{ url_for('meme') }}" class="btn">Generador de memes</a>
+            <a href="{{ url_for('email') }}" class="btn">Enviar emails masivos</a>
+            <a href="{{ url_for('shortener') }}" class="btn">Acortador de URLs</a>
+            <a href="{{ url_for('tts') }}" class="btn">Conversor de texto a voz</a>
+            <a href="{{ url_for('currency') }}" class="btn">Conversor de moneda</a>
+            <a href="{{ url_for('password') }}" class="btn">Generador de contraseñas seguras</a>
+            <a href="{{ url_for('pdf_unlock') }}" class="btn">Desbloquear PDF Con contraseña</a>
+            <a href="{{ url_for('pdf_bruteforce') }}" class="btn">Desbloquear PDF por fuerza bruta</a>
+            <a href="{{ url_for('pdf_protect') }}" class="btn">Proteger PDF con contraseña</a>
+        </div>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

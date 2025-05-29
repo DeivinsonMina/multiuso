@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Memes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Generador de Memes</h1>
+        <form method="post" enctype="multipart/form-data">
+            <label for="imagen">Selecciona una imagen:</label>
+            <input type="file" id="imagen" name="imagen" accept="image/*" required>
+            <label for="texto_superior">Texto superior:</label>
+            <input type="text" id="texto_superior" name="texto_superior" maxlength="60">
+            <label for="texto_inferior">Texto inferior:</label>
+            <input type="text" id="texto_inferior" name="texto_inferior" maxlength="60">
+            <button type="submit" class="btn">Generar meme</button>
+        </form>
+        {% if meme_url %}
+            <div style="margin-top:20px;">
+                <img src="{{ meme_url }}" alt="Meme generado" style="max-width:100%;border-radius:8px;">
+                <br>
+                <a href="{{ meme_url }}" download class="download-btn">Descargar meme</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;margin-top:15px;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

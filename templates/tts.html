@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Texto a Voz (TTS)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Texto a Voz (TTS)</h1>
+        <form method="post">
+            <label for="texto">Texto:</label>
+            <textarea id="texto" name="texto" rows="4" required placeholder="Escribe el texto aquí..."></textarea>
+            <label for="idioma">Idioma:</label>
+            <select id="idioma" name="idioma">
+                <option value="es">Español</option>
+                <option value="en">Inglés</option>
+                <option value="pt">Portugués</option>
+                <option value="fr">Francés</option>
+                <!-- Agrega más idiomas si lo deseas -->
+            </select>
+            <button type="submit" class="btn">Generar Audio</button>
+        </form>
+        {% if audio_url %}
+            <div style="margin-top:20px;">
+                <audio controls>
+                    <source src="{{ audio_url }}" type="audio/mpeg">
+                    Tu navegador no soporta el elemento de audio.
+                </audio>
+                <br>
+                <a href="{{ audio_url }}" download class="download-btn">Descargar audio</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;margin-top:15px;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

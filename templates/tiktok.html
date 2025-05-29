@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Descargar de TikTok</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Descargar de TikTok</h1>
+        <form method="post">
+            <label for="url">URL del video de TikTok:</label>
+            <input type="text" id="url" name="url" required placeholder="https://www.tiktok.com/...">
+            <label for="tipo">¿Qué deseas descargar?</label>
+            <select id="tipo" name="tipo" required>
+                <option value="video">Video (mp4)</option>
+                <option value="audio">Solo audio (mp3)</option>
+            </select>
+            <button type="submit" class="btn">Descargar</button>
+        </form>
+        {% if filename and tipo == 'audio' %}
+            <div style="margin-top:20px;">
+                <a href="{{ url_for('static', filename=filename) }}" download class="download-btn">Descargar MP3</a>
+            </div>
+        {% elif filename and tipo == 'video' %}
+            <div style="margin-top:20px;">
+                <a href="{{ url_for('static', filename=filename) }}" download class="download-btn">Descargar MP4</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

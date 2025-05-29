@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversor de Monedas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Conversor de Monedas</h1>
+        <form method="post">
+            <label for="amount">Cantidad:</label>
+            <input type="number" step="any" id="amount" name="amount" required value="{{ amount if amount else '' }}">
+            <label for="from_currency">De:</label>
+            <select id="from_currency" name="from_currency" required>
+                {% for code, name in monedas %}
+                    <option value="{{ code }}" {% if from_currency == code %}selected{% endif %}>{{ name }} ({{ code }})</option>
+                {% endfor %}
+            </select>
+            <label for="to_currency">A:</label>
+            <select id="to_currency" name="to_currency" required>
+                {% for code, name in monedas %}
+                    <option value="{{ code }}" {% if to_currency == code %}selected{% endif %}>{{ name }} ({{ code }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Convertir</button>
+        </form>
+        {% if resultado is not none %}
+            <div style="margin-top:20px;">
+                <strong>Resultado:</strong>
+                {{ amount }} {{ from_currency }} = {{ resultado }} {{ to_currency }}
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;margin-top:15px;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

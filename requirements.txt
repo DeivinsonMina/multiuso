@@ -1,0 +1,7 @@
+Flask
+qrcode
+yt-dlp
+Pillow
+requests
+gtts
+pypdf

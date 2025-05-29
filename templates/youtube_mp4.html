@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Descargar videos de YouTube (mp4)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Descargar videos de YouTube (mp4)</h1>
+        <form method="post">
+            <label for="url">URL del video de YouTube:</label>
+            <input type="text" id="url" name="url" required placeholder="https://youtube.com/...">
+            <button type="submit" class="btn">Descargar MP4</button>
+        </form>
+        {% if filename %}
+            <div style="margin-top:20px;">
+                <a href="{{ url_for('static', filename=filename) }}" download class="download-btn">Descargar archivo MP4</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>

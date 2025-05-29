@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acortador de URLs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Acortador de URLs</h1>
+        <form method="post">
+            <label for="url">URL larga:</label>
+            <input type="url" id="url" name="url" required placeholder="https://ejemplo.com/lo-que-sea">
+            <button type="submit" class="btn">Acortar URL</button>
+        </form>
+        {% if short_url %}
+            <div style="margin-top:20px;">
+                <strong>URL corta:</strong>
+                <a href="{{ short_url }}" target="_blank">{{ short_url }}</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;margin-top:15px;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+    <script>
+document.getElementById('pdf_file').addEventListener('change', function(){
+    const fileName = this.files[0] ? this.files[0].name : "Seleccionar archivo PDF...";
+    document.getElementById('file-chosen').textContent = fileName;
+});
+document.querySelector('.file-btn').onclick = function() {
+    document.getElementById('pdf_file').click();
+};
+</script>
+</body>
+</html>
