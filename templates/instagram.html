@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Descargar de Instagram</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Descargar video o audio de Instagram</h1>
+        <form method="post">
+            <label for="url">Pega el enlace de Instagram:</label>
+            <input type="url" id="url" name="url" placeholder="https://www.instagram.com/..." required>
+            <label for="tipo">Tipo de descarga:</label>
+            <select id="tipo" name="tipo">
+                <option value="video">Video</option>
+                <option value="audio">Audio (mp3)</option>
+            </select>
+            <button type="submit" class="btn">Descargar</button>
+        </form>
+        {% if filename %}
+            <div style="margin-top:20px;">
+                <a href="{{ url_for('static', filename=filename) }}" download class="download-btn">Descargar archivo</a>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div style="color:red;margin-top:15px;">{{ error }}</div>
+        {% endif %}
+        <a href="{{ url_for('main_menu') }}" class="another-btn" style="margin-top:20px;">Volver al menú principal</a>
+    </div>
+</body>
+</html>
