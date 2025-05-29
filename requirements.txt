@@ -5,3 +5,5 @@ Pillow
 requests
 gtts
 pypdf
+pandas
+scikit-learn
