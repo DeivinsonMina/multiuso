@@ -12,6 +12,11 @@ from gtts import gTTS
 import random
 import string
 from pypdf import PdfReader, PdfWriter
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+import io
+import requests
 
 app = Flask(__name__)
 @app.route('/descargar-rockyou')
@@ -461,6 +466,274 @@ def pdf_protect():
                 except Exception as e:
                     error = f"Error al proteger el PDF: {e}"
     return render_template('pdf_protect.html', protected_url=protected_url, error=error)
+@app.route('/instagram', methods=['GET', 'POST'])
+def instagram():
+    filename = None
+    error = None
+    if request.method == 'POST':
+        url = request.form['url']
+        tipo = request.form.get('tipo', 'video')  # 'video' o 'audio'
+        try:
+            with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                title = clean_filename(info['title'])
+            output_template = os.path.join('static', f'{title}.%(ext)s')
+            if tipo == 'audio':
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': output_template,
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }],
+                    'quiet': True,
+                    'noplaylist': True,
+                }
+                ext = 'mp3'
+            else:
+                ydl_opts = {
+                    'format': 'mp4',
+                    'outtmpl': output_template,
+                    'quiet': True,
+                    'noplaylist': True,
+                }
+                ext = 'mp4'
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            filename = f"{title}.{ext}"
+            file_path = os.path.join('static', filename)
+            if not os.path.exists(file_path):
+                error = "No se pudo descargar el archivo."
+        except Exception as e:
+            error = f"Error: {e}"
+    return render_template('instagram.html', filename=filename, error=error)
+
+@app.route('/facebook', methods=['GET', 'POST'])
+def facebook():
+    filename = None
+    error = None
+    if request.method == 'POST':
+        url = request.form['url']
+        tipo = request.form.get('tipo', 'video')
+        try:
+            with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                info = ydl.extract_info(url, download=False)
+                title = clean_filename(info['title'])
+            output_template = os.path.join('static', f'{title}.%(ext)s')
+            if tipo == 'audio':
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': output_template,
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }],
+                    'quiet': True,
+                    'noplaylist': True,
+                }
+                ext = 'mp3'
+            else:
+                ydl_opts = {
+                    'format': 'mp4',
+                    'outtmpl': output_template,
+                    'quiet': True,
+                    'noplaylist': True,
+                }
+                ext = 'mp4'
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            filename = f"{title}.{ext}"
+            file_path = os.path.join('static', filename)
+            if not os.path.exists(file_path):
+                error = "No se pudo descargar el archivo."
+        except Exception as e:
+            error = f"Error: {e}"
+    return render_template('facebook.html', filename=filename, error=error)
+
+
+
+LIGAS = {
+    "Premier League (Inglaterra)": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/E0.csv",
+        "local": "static/datos/E0.csv"
+    },
+    "La Liga (España)": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/SP1.csv",
+        "local": "static/datos/SP1.csv"
+    },
+    "Serie A (Italia)": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/I1.csv",
+        "local": "static/datos/I1.csv"
+    },
+    "Ligue 1 (Francia)": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/F1.csv",
+        "local": "static/datos/F1.csv"
+    },
+    "Bundesliga (Alemania)": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/D1.csv",
+        "local": "static/datos/D1.csv"
+    },
+    "Champions League": {
+        "url": "https://www.football-data.co.uk/mmz4281/2324/E1.csv",
+        "local": "static/datos/E1.csv"
+    }
+}
+
+def cargar_modelo(liga_info):
+    import os
+    os.makedirs(os.path.dirname(liga_info["local"]), exist_ok=True)
+    try:
+        df = pd.read_csv(liga_info["local"])
+    except Exception:
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            r = requests.get(liga_info["url"], headers=headers, timeout=10)
+            r.raise_for_status()
+            with open(liga_info["local"], "wb") as f:
+                f.write(r.content)
+            df = pd.read_csv(io.StringIO(r.content.decode('utf-8')))
+        except Exception as e:
+            raise Exception(f"No se pudo obtener los datos: {e}")
+
+    # Usar solo partidos jugados y columnas disponibles
+    columnas = ['HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR', 'HS', 'AS', 'HC', 'AC', 'HST', 'AST']
+    columnas_existentes = [col for col in columnas if col in df.columns]
+    df = df[columnas_existentes].dropna()
+    equipos = pd.concat([df['HomeTeam'], df['AwayTeam']]).unique()
+    equipo2id = {e: i for i, e in enumerate(equipos)}
+    df['local_id'] = df['HomeTeam'].map(equipo2id)
+    df['visitante_id'] = df['AwayTeam'].map(equipo2id)
+    X = df[['local_id', 'visitante_id']]
+
+    # Modelos
+    modelo_resultado = RandomForestClassifier(n_estimators=200, random_state=42)
+    modelo_resultado.fit(X, df['FTR'])
+    precision = modelo_resultado.score(X, df['FTR'])
+
+    modelo_goles_local = RandomForestClassifier(n_estimators=150, random_state=42)
+    modelo_goles_local.fit(X, df['FTHG'])
+
+    modelo_goles_visitante = RandomForestClassifier(n_estimators=150, random_state=42)
+    modelo_goles_visitante.fit(X, df['FTAG'])
+
+    modelo_corners_local = modelo_corners_visitante = None
+    if 'HC' in df and 'AC' in df:
+        modelo_corners_local = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_corners_local.fit(X, df['HC'])
+        modelo_corners_visitante = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_corners_visitante.fit(X, df['AC'])
+
+    modelo_shots_local = modelo_shots_visitante = None
+    if 'HS' in df and 'AS' in df:
+        modelo_shots_local = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_shots_local.fit(X, df['HS'])
+        modelo_shots_visitante = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_shots_visitante.fit(X, df['AS'])
+
+    modelo_shots_on_target_local = modelo_shots_on_target_visitante = None
+    if 'HST' in df and 'AST' in df:
+        modelo_shots_on_target_local = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_shots_on_target_local.fit(X, df['HST'])
+        modelo_shots_on_target_visitante = RandomForestClassifier(n_estimators=100, random_state=42)
+        modelo_shots_on_target_visitante.fit(X, df['AST'])
+
+    return (
+        modelo_resultado, modelo_goles_local, modelo_goles_visitante,
+        modelo_corners_local, modelo_corners_visitante,
+        modelo_shots_local, modelo_shots_visitante,
+        modelo_shots_on_target_local, modelo_shots_on_target_visitante,
+        equipo2id, equipos, precision
+    )
+
+# En tu ruta pronostico, usa así:
+@app.route('/pronostico', methods=['GET', 'POST'])
+def pronostico():
+    resultado = None
+    goles = None
+    corners = None
+    tiros = None
+    tiros_puerta = None
+    probabilidad = None
+    precision = None
+    error = None
+    equipos_lista = []
+    liga_seleccionada = request.form.get('liga') if request.method == 'POST' else None
+
+    if liga_seleccionada and liga_seleccionada in LIGAS:
+        liga_info = LIGAS[liga_seleccionada]
+        try:
+            (modelo_resultado, modelo_goles_local, modelo_goles_visitante,
+             modelo_corners_local, modelo_corners_visitante,
+             modelo_shots_local, modelo_shots_visitante,
+             modelo_shots_on_target_local, modelo_shots_on_target_visitante,
+             equipo2id, equipos, precision) = cargar_modelo(liga_info)
+            equipos_lista = sorted(list(equipo2id.keys()))
+        except Exception as e:
+            error = f"Error cargando datos de la liga: {e}"
+    else:
+        equipos_lista = []
+
+    if request.method == 'POST' and not error and equipos_lista:
+        local = request.form.get('local')
+        visitante = request.form.get('visitante')
+        if not local or not visitante:
+            error = "Selecciona ambos equipos."
+        elif local == visitante:
+            error = "Elige equipos diferentes."
+        else:
+            try:
+                entrada = [[equipo2id[local], equipo2id[visitante]]]
+                pred_resultado = modelo_resultado.predict(entrada)[0]
+                proba = modelo_resultado.predict_proba(entrada)[0]
+                clases = modelo_resultado.classes_
+                proba_dict = {clase: round(100*p,2) for clase, p in zip(clases, proba)}
+                probabilidad = f"Probabilidades: Local {proba_dict.get('H',0)}% | Empate {proba_dict.get('D',0)}% | Visitante {proba_dict.get('A',0)}%"
+                pred_goles_local = modelo_goles_local.predict(entrada)[0]
+                pred_goles_visitante = modelo_goles_visitante.predict(entrada)[0]
+                resultado = {
+                    'H': f"Gana {local}",
+                    'A': f"Gana {visitante}",
+                    'D': "Empate"
+                }.get(pred_resultado, "Empate")
+                goles = f"{local} {pred_goles_local} - {pred_goles_visitante} {visitante}"
+
+                # Corners
+                if modelo_corners_local and modelo_corners_visitante:
+                    pred_corners_local = modelo_corners_local.predict(entrada)[0]
+                    pred_corners_visitante = modelo_corners_visitante.predict(entrada)[0]
+                    corners = f"Corners: {local} {pred_corners_local} - {pred_corners_visitante} {visitante}"
+
+                # Tiros totales
+                if modelo_shots_local and modelo_shots_visitante:
+                    pred_shots_local = modelo_shots_local.predict(entrada)[0]
+                    pred_shots_visitante = modelo_shots_visitante.predict(entrada)[0]
+                    tiros = f"Tiros totales: {local} {pred_shots_local} - {pred_shots_visitante} {visitante}"
+
+                # Tiros a puerta
+                if modelo_shots_on_target_local and modelo_shots_on_target_visitante:
+                    pred_shots_on_target_local = modelo_shots_on_target_local.predict(entrada)[0]
+                    pred_shots_on_target_visitante = modelo_shots_on_target_visitante.predict(entrada)[0]
+                    tiros_puerta = f"Tiros a puerta: {local} {pred_shots_on_target_local} - {pred_shots_on_target_visitante} {visitante}"
+
+            except Exception as e:
+                error = f"Error: {e}"
+
+    return render_template(
+        'pronostico.html',
+        ligas=LIGAS.keys(),
+        liga_seleccionada=liga_seleccionada,
+        equipos=equipos_lista,
+        resultado=resultado,
+        goles=goles,
+        corners=corners,
+        tiros=tiros,
+        tiros_puerta=tiros_puerta,
+        probabilidad=probabilidad,
+        precision=precision,
+        error=error
+    )
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
