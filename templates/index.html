@@ -21,6 +21,74 @@
             .tool-btn { font-size: 1rem; min-height: 56px; }
         }
     </style>
+        <!-- Chatbot flotante -->
+<style>
+#chatbot-float-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 9999;
+    background: #3a6ea5;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 2em;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.2);
+    cursor: pointer;
+}
+#chatbot-float-window {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 370px;
+    height: 500px;
+    z-index: 10000;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(44,62,80,0.18);
+    overflow: hidden;
+}
+#chatbot-float-window iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+#chatbot-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.5em;
+    color: #22334a;
+    cursor: pointer;
+    z-index: 10001;
+}
+@media (max-width: 600px) {
+    #chatbot-float-window {
+        width: 98vw;
+        height: 70vh;
+        right: 1vw;
+        bottom: 80px;
+    }
+}
+</style>
+<button id="chatbot-float-btn" title="Chatbot">💬</button>
+<div id="chatbot-float-window">
+    <button id="chatbot-close" title="Cerrar">&times;</button>
+    <iframe src="{{ url_for('chatbot') }}"></iframe>
+</div>
+<script>
+document.getElementById('chatbot-float-btn').onclick = function() {
+    document.getElementById('chatbot-float-window').style.display = 'block';
+};
+document.getElementById('chatbot-close').onclick = function() {
+    document.getElementById('chatbot-float-window').style.display = 'none';
+};
+</script>
 </head>
 <body>
     <div class="container py-4">
