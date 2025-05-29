@@ -1334,6 +1334,8 @@ def buscar_link(mensaje):
 def chatbot():
     if 'chat_history' not in session:
         session['chat_history'] = []
+    if 'ultima_pregunta' not in session:
+        session['ultima_pregunta'] = None
     respuesta = ""
     if request.method == 'POST':
         mensaje = request.form.get('mensaje', '').strip()
@@ -1343,10 +1345,12 @@ def chatbot():
         # Aprendizaje
         if mensaje_norm.startswith("aprende:"):
             partes = mensaje.split(":", 1)
-            if len(partes) == 2 and len(session['chat_history']) > 1:
-                pregunta = session['chat_history'][-2][1]
+            if len(partes) == 2 and session.get('ultima_pregunta'):
+                pregunta = session['ultima_pregunta']
                 chatbot_memory[pregunta] = partes[1].strip()
                 respuesta = f"He aprendido que '{pregunta}' se responde: {partes[1].strip()}"
+            else:
+                respuesta = "Primero hazme una pregunta, luego enséñame la respuesta usando: aprende:tu respuesta aquí"
         else:
             # Buscar link si pregunta por link
             if "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
@@ -1362,6 +1366,8 @@ def chatbot():
                     respuesta = respuesta_encontrada
                 else:
                     respuesta = "No sé la respuesta. ¿Quieres enseñarme? Escribe: aprende:tu respuesta aquí"
+            # Guarda la última pregunta para aprendizaje
+            session['ultima_pregunta'] = mensaje
         session['chat_history'].append(("Bot", respuesta))
     return render_template('chatbot.html', chat_history=session['chat_history'])
 if __name__ == "__main__":
