@@ -28,9 +28,8 @@ def descargar_rockyou():
             r = requests.get(url, stream=True)
             with open(rockyou_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-            return "✅ rockyou.txt descargado correctamente en la carpeta static/"
+                    f.write(chunk)
+            return "✅ Archivo rockyou.txt descargado correctamente."
         else:
             return "ℹ️ El archivo ya existe en static/"
     except Exception as e:
