@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
+RUN apt-get update && apt-get install -y ffmpeg
 
 # Copia primero los requerimientos y luego el resto del código
 COPY requirements.txt .
