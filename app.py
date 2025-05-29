@@ -395,44 +395,32 @@ def pdf_unlock():
     return render_template('pdf_unlock.html', unlocked_url=unlocked_url, error=error)
 
 
-@app.route('/pdf-bruteforce', methods=['GET', 'POST'])
-def pdf_bruteforce():
-    unlocked_url = None
-    error = None
-    found_password = None
-    # Ruta al diccionario en static
-    wordlist_path = os.path.join('static', 'rockyou.txt')
-    if request.method == 'POST':
-        pdf_file = request.files.get('pdf_file')
-        if not pdf_file or pdf_file.filename == '':
-            error = "Por favor, selecciona un archivo PDF."
-        elif not os.path.exists(wordlist_path):
-            error = "No se encontró el diccionario de contraseñas en static/rockyou.txt."
-        else:
+def try_passwords(pdf_path, wordlist_path, max_attempts=1000):
+    with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
+        for i, password in enumerate(f):
+            if i >= max_attempts:
+                return "No se encontró la contraseña en los primeros 1000 intentos"
+            pwd = password.strip()
             try:
-                reader = PdfReader(pdf_file)
-                if not reader.is_encrypted:
-                    error = "El PDF no está protegido con contraseña."
-                else:
-                    with open(wordlist_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        passwords = [line.strip() for line in f if line.strip()]
-                    for pwd in passwords:
-                        if reader.decrypt(pwd):
-                            found_password = pwd
-                            writer = PdfWriter()
-                            for page in reader.pages:
-                                writer.add_page(page)
-                            unlocked_filename = f"unlocked_{uuid.uuid4().hex}.pdf"
-                            unlocked_path = os.path.join('static', unlocked_filename)
-                            with open(unlocked_path, "wb") as f_out:
-                                writer.write(f_out)
-                            unlocked_url = url_for('static', filename=unlocked_filename)
-                            break
-                    if not found_password:
-                        error = "No se encontró la contraseña en el diccionario."
-            except Exception as e:
-                error = f"Error al procesar el PDF: {e}"
-    return render_template('pdf_bruteforce.html', unlocked_url=unlocked_url, error=error, found_password=found_password)
+                with open(pdf_path, "rb") as file:
+                    reader = PyPDF2.PdfReader(file)
+                    if reader.decrypt(pwd):
+                        return f"Contraseña encontrada: {pwd}"
+            except Exception:
+                pass
+    return "Contraseña no encontrada"
+
+@app.route("/pdf-bruteforce", methods=["POST"])
+def pdf_bruteforce():
+    pdf = request.files["pdf"]
+    pdf_path = os.path.join("uploads", pdf.filename)
+    pdf.save(pdf_path)
+
+    # Asegúrate que esta ruta sea correcta
+    wordlist_path = os.path.join("static", "rockyou.txt")
+
+    resultado = try_passwords(pdf_path, wordlist_path)
+    return resultado
 
 @app.route('/pdf-protect', methods=['GET', 'POST'])
 def pdf_protect():
