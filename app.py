@@ -13,21 +13,28 @@ import random
 import string
 from pypdf import PdfReader, PdfWriter
 
-# Descarga rockyou.txt automáticamente si no existe (Railway o local)
-rockyou_path = os.path.join('static', 'rockyou.txt')
-if not os.path.exists('static'):
-    os.makedirs('static')
-if not os.path.exists(rockyou_path):
-    print("Descargando rockyou.txt, espera unos minutos...")
-    url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
-    r = requests.get(url, stream=True)
-    with open(rockyou_path, "wb") as f:
-        for chunk in r.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-    print("rockyou.txt descargado correctamente.")
-
 app = Flask(__name__)
+@app.route('/descargar-rockyou')
+def descargar_rockyou():
+    try:
+        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        rockyou_path = os.path.join(static_dir, 'rockyou.txt')
+
+        if not os.path.exists(static_dir):
+            os.makedirs(static_dir)
+
+        if not os.path.exists(rockyou_path):
+            url = "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+            r = requests.get(url, stream=True)
+            with open(rockyou_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            return "✅ rockyou.txt descargado correctamente en la carpeta static/"
+        else:
+            return "ℹ️ El archivo ya existe en static/"
+    except Exception as e:
+        return f"❌ Error al descargar: {e}"
 
 @app.route('/')
 def main_menu():
