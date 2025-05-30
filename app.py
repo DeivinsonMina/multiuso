@@ -735,562 +735,71 @@ def pronostico():
         precision=precision,
         error=error
     )
+
 from flask import session
-
-# Memoria simple para el chatbot (en memoria, se borra al reiniciar)
-chatbot_memory = {
-    "hola": "¡Hola! ¿En qué puedo ayudarte con Multiuso?",
-    "buenos días": "¡Buenos días! ¿Listo para usar alguna herramienta?",
-    "buenas tardes": "¡Buenas tardes! ¿En qué puedo ayudarte hoy?",
-    "buenas noches": "¡Buenas noches! ¿Necesitas algo antes de dormir?",
-    "¿qué puedes hacer?": (
-        "Puedo generar códigos QR, descargar videos y audios de YouTube, TikTok, Instagram y Facebook, "
-        "convertir texto a voz, enviar correos electrónicos, crear memes, acortar URLs, convertir monedas, "
-        "generar contraseñas seguras, desbloquear y proteger archivos PDF, hacer pronósticos deportivos y mucho más."
-    ),
-    "¿dónde está el link de qr?": "Puedes acceder a la herramienta de QR aquí: <a href='/qr'>Generar QR</a>",
-    "¿dónde está el link de youtube mp3?": "Aquí puedes descargar audio de YouTube: <a href='/youtube-mp3'>YouTube MP3</a>",
-    "¿dónde está el link de youtube mp4?": "Aquí puedes descargar video de YouTube: <a href='/youtube-mp4'>YouTube MP4</a>",
-    "¿dónde está el link de tiktok?": "Descarga videos o audios de TikTok aquí: <a href='/tiktok'>TikTok</a>",
-    "¿dónde está el link de meme?": "Crea memes aquí: <a href='/meme'>Meme Generator</a>",
-    "¿dónde está el link de email?": "Envía correos electrónicos aquí: <a href='/email'>Email</a>",
-    "¿dónde está el link de acortar url?": "Acorta tus enlaces aquí: <a href='/shortener'>Acortar URL</a>",
-    "¿dónde está el link de texto a voz?": "Convierte texto a voz aquí: <a href='/tts'>Texto a Voz</a>",
-    "¿dónde está el link de conversor de monedas?": "Convierte monedas aquí: <a href='/currency'>Conversor de Monedas</a>",
-    "¿dónde está el link de generar contraseña?": "Genera contraseñas seguras aquí: <a href='/password'>Generar Contraseña</a>",
-    "¿dónde está el link de desbloquear pdf?": "Desbloquea PDFs aquí: <a href='/pdf-unlock'>Desbloquear PDF</a>",
-    "¿dónde está el link de proteger pdf?": "Protege tus PDFs aquí: <a href='/pdf-protect'>Proteger PDF</a>",
-    "¿dónde está el link de instagram?": "Descarga contenido de Instagram aquí: <a href='/instagram'>Instagram</a>",
-    "¿dónde está el link de facebook?": "Descarga videos de Facebook aquí: <a href='/facebook'>Facebook</a>",
-    "¿dónde está el link de pronóstico?": "Haz pronósticos deportivos aquí: <a href='/pronostico'>Pronóstico Deportivo</a>",
-    "¿cómo genero un código qr?": "Ve a la sección 'Generar QR', ingresa el texto o enlace y haz clic en 'Generar'.",
-    "¿cómo hago un qr con logo?": "Actualmente no soporta logos, pero puedes editar la imagen generada con un editor externo.",
-    "¿cómo descargo videos de youtube?": "En la sección 'YouTube MP3' o 'YouTube MP4', pega el enlace del video y elige el formato que deseas.",
-    "¿cómo descargo videos de tiktok?": "En la sección 'TikTok', pega el enlace del video y elige si quieres descargar el video o solo el audio.",
-    "¿cómo descargo videos de instagram?": "En la sección 'Instagram', pega el enlace y selecciona si quieres video o audio.",
-    "¿cómo descargo videos de facebook?": "En la sección 'Facebook', pega el enlace y elige el formato de descarga.",
-    "¿cómo convierto texto a voz?": "En la sección 'Texto a Voz', escribe el texto, selecciona el idioma y haz clic en 'Convertir'.",
-    "¿cómo envío un correo electrónico?": (
-        "En la sección 'Email', ingresa tu correo, contraseña, asunto, mensaje y destinatarios. Luego haz clic en 'Enviar'."
-    ),
-    "¿cómo hago un meme?": (
-        "En la sección 'Meme', sube una imagen y escribe el texto superior e inferior. Haz clic en 'Generar meme'."
-    ),
-    "¿cómo acorto una url?": "En la sección 'Acortar URL', pega la dirección y haz clic en 'Acortar'.",
-    "¿cómo convierto monedas?": (
-        "En la sección 'Conversor de Monedas', selecciona las monedas, ingresa el monto y haz clic en 'Convertir'."
-    ),
-    "¿cómo genero una contraseña segura?": (
-        "En la sección 'Generar Contraseña', elige la longitud y los tipos de caracteres, luego haz clic en 'Generar'."
-    ),
-    "¿cómo desbloqueo un pdf?": (
-        "En la sección 'Desbloquear PDF', sube el archivo y escribe la contraseña si la conoces. Si no, usa la opción de fuerza bruta."
-    ),
-    "¿cómo protejo un pdf con contraseña?": (
-        "En la sección 'Proteger PDF', sube el archivo y escribe la contraseña que deseas ponerle."
-    ),
-    "¿cómo hago un pronóstico deportivo?": (
-        "En la sección 'Pronosticador Deportivo', selecciona la liga, los equipos y haz clic en 'Pronosticar' para ver el resultado estimado."
-    ),
-    "¿qué ligas puedo pronosticar?": (
-        "Puedes pronosticar partidos de Premier League, La Liga, Serie A, Ligue 1, Bundesliga, Liga Colombiana A y B, Copa Libertadores, Copa Sudamericana y Champions League (solo datos disponibles)."
-    ),
-    "¿cómo funciona el pronosticador?": (
-        "El pronosticador usa modelos de machine learning entrenados con datos históricos para estimar resultados, goles, corners y tiros."
-    ),
-    "¿cómo puedo cambiar el idioma del texto a voz?": (
-        "En la sección 'Texto a Voz', selecciona el idioma que prefieras antes de convertir el texto."
-    ),
-    "¿qué pasa si olvido mi contraseña de email?": (
-        "Debes recuperarla desde el proveedor de tu correo. Multiuso no almacena contraseñas."
-    ),
-    "¿puedo usar multiuso en el celular?": (
-        "Sí, la aplicación es responsiva y funciona bien en dispositivos móviles."
-    ),
-    "¿cómo reporto un error?": (
-        "Puedes enviar un correo al desarrollador o dejar tu comentario en la sección de contacto si está disponible."
-    ),
-    "gracias": "¡De nada! Si tienes otra pregunta, aquí estoy.",
-    "adiós": "¡Hasta luego! Vuelve cuando quieras.",
-    "bye": "¡Hasta luego! Vuelve cuando quieras.",
-    "¿cómo genero un qr para wifi?": (
-        "En la sección 'Generar QR', ingresa el texto con el formato de red WiFi: WIFI:S:nombre;T:WPA;P:contraseña;;"
-    ),
-    "¿puedo descargar solo el audio de un video?": (
-        "Sí, en las secciones de YouTube, TikTok, Instagram o Facebook, selecciona la opción de audio."
-    ),
-    "¿qué formatos de video soporta?": (
-        "Puedes descargar videos en formato MP4 y audios en MP3."
-    ),
-    "¿cómo elimino la contraseña de un pdf si no la sé?": (
-        "Usa la opción 'Desbloquear PDF por fuerza bruta' y sube el archivo. El sistema intentará encontrar la contraseña usando un diccionario."
-    ),
-    "¿qué es multiuso?": (
-        "Multiuso es una aplicación web que reúne varias herramientas útiles en un solo lugar: QR, descargas, memes, email, PDF, pronósticos y más."
-    ),
-    "¿cómo actualizo la página?": (
-        "Pulsa F5 o el botón de recargar en tu navegador."
-    ),
-    "¿puedo usar varias funciones a la vez?": (
-        "Sí, puedes usar todas las funciones de Multiuso de manera independiente."
-    ),
-    "¿cómo borro mi historial de chat?": (
-        "Cierra la pestaña o reinicia la sesión para borrar el historial temporalmente. El bot no almacena datos personales."
-    ),
-    "¿cómo puedo enseñar al bot nuevas respuestas?": (
-        "Si el bot no sabe una respuesta, puedes escribir: aprende:tu respuesta aquí. El bot la recordará durante la sesión."
-    ),
-    "¿qué pasa si cierro la página?": (
-        "Se perderá el historial de chat y las respuestas aprendidas en esta sesión."
-    ),
-    "¿puedo descargar archivos grandes?": (
-        "Depende del tamaño y la fuente. Para videos muy largos, la descarga puede tardar más o fallar."
-    ),
-    "¿qué hago si una descarga falla?": (
-        "Verifica el enlace, tu conexión a internet y vuelve a intentarlo. Si el problema persiste, puede ser por restricciones del sitio fuente."
-    ),
-    "¿cómo convierto texto a voz en inglés?": (
-        "En la sección 'Texto a Voz', selecciona 'en' como idioma antes de convertir el texto."
-    ),
-    "¿cómo hago para que el qr tenga un logo?": (
-        "Actualmente la función de QR no soporta logos, pero puedes editar la imagen generada con un editor externo."
-    ),
-    "¿puedo compartir los memes que hago?": (
-        "Sí, puedes descargar el meme generado y compartirlo en redes sociales o por mensaje."
-    ),
-    "¿cómo sé si el pdf está protegido?": (
-        "Al intentar desbloquearlo, la app te avisará si el PDF tiene contraseña."
-    ),
-    "¿puedo usar multiuso gratis?": (
-        "Sí, todas las funciones de Multiuso son gratuitas."
-    ),
-    "¿cómo contacto al soporte?": (
-        "Puedes escribir al correo del desarrollador o usar la sección de contacto si está disponible."
-    ),
-    "¿puedo usar multiuso sin registrarme?": (
-        "Sí, no necesitas registrarte para usar las funciones."
-    ),
-    "¿qué hago si tengo otra pregunta?": (
-        "¡Solo escríbela aquí y te responderé o aprenderé la respuesta si no la sé!"
-    ),
-    "¿puedo hacer una tabla?": (
-        "Por ahora no tengo una función de tablas, pero puedes usar Excel o Google Sheets y subir la imagen aquí para hacer un meme."
-    ),
-    "¿puedo convertir imágenes a pdf?": (
-        "Actualmente no, pero puedes usar herramientas externas como SmallPDF o iLovePDF."
-    ),
-    "¿puedo traducir texto?": (
-        "Por ahora no tengo traductor integrado, pero puedes usar Google Translate y luego usar mis otras funciones."
-    ),
-    "¿puedo personalizar los colores del qr?": (
-        "Actualmente solo genero QR en blanco y negro, pero puedes editar la imagen con un editor externo."
-    ),
-    "¿puedo programar envíos de email?": (
-        "No, los envíos son inmediatos. Si quieres programar, puedes usar servicios como Gmail o Outlook."
-    ),
-    "¿puedo guardar mis memes?": (
-        "Sí, después de generarlos puedes descargarlos y guardarlos donde quieras."
-    ),
-    "¿puedo compartir el link de multiuso?": (
-        "¡Por supuesto! Comparte la dirección de la web con quien quieras."
-    ),
-    "¿puedo usar multiuso en varios dispositivos?": (
-        "Sí, puedes acceder desde cualquier dispositivo con navegador."
-    ),
-    "¿puedo pedir nuevas funciones?": (
-        "¡Sí! Escribe tu sugerencia y la enviaré al desarrollador."
-    ),
-    "¿puedo borrar archivos subidos?": (
-        "Los archivos se eliminan automáticamente después de un tiempo, pero puedes pedir al desarrollador que los borre antes si es urgente."
-    ),
-    "¿puedo usar multiuso sin internet?": (
-        "No, necesitas conexión a internet para usar la aplicación."
-    ),
-    "¿puedo cambiar el idioma de la app?": (
-        "Por ahora solo está disponible en español."
-    ),
-    "¿puedo hacer varias cosas a la vez?": (
-        "Sí, puedes abrir varias pestañas y usar diferentes herramientas simultáneamente."
-    ),
-    "¿puedo usar multiuso para trabajar?": (
-        "¡Claro! Multiuso es ideal para tareas rápidas y cotidianas."
-    ),
-    "¿puedo usar multiuso para estudiar?": (
-        "Sí, puedes generar materiales, memes educativos, convertir texto a voz y más."
-    ),
-    "¿puedo usar multiuso para enseñar?": (
-        "¡Por supuesto! Puedes crear recursos, memes, audios y compartirlos con tus estudiantes."
-    ),
-    "¿puedo usar multiuso para bromas?": (
-        "¡Sí! Puedes crear memes y audios divertidos para compartir con tus amigos."
-    ),
-    "¿puedo usar multiuso para mi negocio?": (
-        "Sí, puedes generar QR para promociones, acortar enlaces y más."
-    ),
-    "¿puedo usar multiuso para enviar archivos grandes?": (
-        "No, Multiuso no es un servicio de almacenamiento ni envío de archivos grandes."
-    ),
-    "¿puedo usar multiuso para editar videos?": (
-        "No, solo puedes descargar videos, no editarlos."
-    ),
-    "¿puedo usar multiuso para editar imágenes?": (
-        "Solo puedes crear memes, no editar imágenes de forma avanzada."
-    ),
-    "¿puedo usar multiuso para hacer presentaciones?": (
-        "No, pero puedes crear imágenes y memes para usarlas en tus presentaciones."
-    ),
-    "¿puedo usar multiuso para hacer encuestas?": (
-        "No, pero puedes generar QR que lleven a formularios de Google Forms o similares."
-    ),
-    "¿puedo usar multiuso para hacer sorteos?": (
-        "No tengo una función de sorteos, pero puedes usar generadores de números aleatorios externos."
-    ),
-    "¿puedo usar multiuso para hacer listas?": (
-        "No tengo una función de listas, pero puedes usar la sección de texto a voz para leer tus listas."
-    ),
-    "¿puedo usar multiuso para hacer recordatorios?": (
-        "No, Multiuso no tiene recordatorios integrados."
-    ),
-    "¿puedo usar multiuso para hacer calendarios?": (
-        "No, pero puedes generar imágenes o QR con enlaces a calendarios de Google."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación?": (
-        "Puedes generar un QR con tus datos de contacto y compartirlo como tarjeta digital."
-    ),
-    "¿puedo usar multiuso para hacer invitaciones?": (
-        "Puedes crear un QR con el enlace a tu evento o una imagen personalizada como meme."
-    ),
-    "¿puedo usar multiuso para hacer stickers?": (
-        "No tengo una función de stickers, pero puedes descargar tus memes y usarlos como stickers en WhatsApp."
-    ),
-    "¿puedo usar multiuso para hacer logos?": (
-        "No, Multiuso no tiene un generador de logos."
-    ),
-    "¿puedo usar multiuso para hacer banners?": (
-        "No, pero puedes crear memes y usarlos como banners sencillos."
-    ),
-    "¿puedo usar multiuso para hacer flyers?": (
-        "No, pero puedes crear imágenes y compartirlas como flyers."
-    ),
-    "¿puedo usar multiuso para hacer posters?": (
-        "No, pero puedes crear memes y usarlos como posters."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de cumpleaños?": (
-        "Puedes crear un meme personalizado como tarjeta de cumpleaños."
-    ),
-    "¿puedo usar multiuso para hacer invitaciones digitales?": (
-        "Sí, puedes crear un QR con el enlace a tu evento o una imagen personalizada."
-    ),
-    "¿puedo usar multiuso para hacer anuncios?": (
-        "Puedes crear memes o imágenes y compartirlas como anuncios."
-    ),
-    "¿puedo usar multiuso para hacer portadas?": (
-        "No, pero puedes crear memes y usarlos como portadas sencillas."
-    ),
-    "¿puedo usar multiuso para hacer memes animados?": (
-        "No, solo puedes crear memes estáticos."
-    ),
-    "¿puedo usar multiuso para hacer gifs?": (
-        "No, Multiuso no tiene un generador de GIFs."
-    ),
-    "¿puedo usar multiuso para hacer videos cortos?": (
-        "No, solo puedes descargar videos, no crearlos."
-    ),
-    "¿puedo usar multiuso para hacer podcasts?": (
-        "Puedes usar la función de texto a voz para crear audios, pero no para grabar podcasts completos."
-    ),
-    "¿puedo usar multiuso para hacer audiolibros?": (
-        "Puedes convertir texto a voz y descargar el audio, pero no dividirlo en capítulos automáticamente."
-    ),
-    "¿puedo usar multiuso para hacer resúmenes?": (
-        "No tengo una función de resúmenes automáticos, pero puedes copiar y pegar el texto que quieras convertir a voz."
-    ),
-    "¿puedo usar multiuso para hacer tareas escolares?": (
-        "Puedes usar varias herramientas para ayudarte, pero recuerda hacer tus tareas tú mismo."
-    ),
-    "¿puedo usar multiuso para hacer tareas universitarias?": (
-        "Puedes usar las herramientas para complementar tu trabajo, pero no para hacer tareas completas."
-    ),
-    "¿puedo usar multiuso para hacer exámenes?": (
-        "No, Multiuso no tiene funciones para exámenes."
-    ),
-    "¿puedo usar multiuso para hacer juegos?": (
-        "No, pero puedes crear memes divertidos para compartir con tus amigos."
-    ),
-    "¿puedo usar multiuso para hacer retos?": (
-        "No, pero puedes usar la función de memes para crear imágenes de retos."
-    ),
-    "¿puedo usar multiuso para hacer preguntas y respuestas?": (
-        "Puedes usar el chat para aprender y enseñar nuevas respuestas."
-    ),
-    "¿puedo usar multiuso para hacer encuestas rápidas?": (
-        "No, pero puedes generar un QR que lleve a una encuesta externa."
-    ),
-    "¿puedo usar multiuso para hacer formularios?": (
-        "No, pero puedes compartir enlaces a formularios usando QR o acortador de URL."
-    ),
-    "¿puedo usar multiuso para hacer listas de compras?": (
-        "Puedes escribir tu lista y convertirla a audio con la función de texto a voz."
-    ),
-    "¿puedo usar multiuso para hacer recetas?": (
-        "Puedes escribir tu receta y convertirla a audio o compartirla como imagen."
-    ),
-    "¿puedo usar multiuso para hacer notas de voz?": (
-        "Puedes convertir texto a voz y descargar el audio."
-    ),
-    "¿puedo usar multiuso para hacer mensajes motivacionales?": (
-        "¡Claro! Escribe tu mensaje y conviértelo en meme o audio."
-    ),
-    "¿puedo usar multiuso para hacer frases célebres?": (
-        "Sí, puedes crear memes o audios con tus frases favoritas."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas navideñas?": (
-        "Puedes crear un meme personalizado como tarjeta navideña."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de amor?": (
-        "Puedes crear un meme romántico o un audio con tu mensaje."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de agradecimiento?": (
-        "Sí, crea un meme o un audio para dar las gracias."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de invitación?": (
-        "Sí, puedes crear un QR con el enlace a tu evento o una imagen personalizada."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación digitales?": (
-        "Sí, genera un QR con tus datos de contacto."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación físicas?": (
-        "Puedes imprimir el QR generado y pegarlo en tu tarjeta física."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación animadas?": (
-        "No, solo puedes generar QR estáticos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con foto?": (
-        "No, pero puedes agregar tu foto a un meme y compartirlo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con logo?": (
-        "No, pero puedes agregar tu logo a un meme y compartirlo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con QR?": (
-        "¡Sí! Esa es una de las funciones principales."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con enlace?": (
-        "Sí, puedes generar un QR con el enlace a tu web o perfil."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con redes sociales?": (
-        "Sí, puedes generar un QR con el enlace a tus redes sociales."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con número de teléfono?": (
-        "Sí, puedes generar un QR con tu número de teléfono."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con dirección?": (
-        "Sí, puedes generar un QR con tu dirección."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con email?": (
-        "Sí, puedes generar un QR con tu correo electrónico."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con vcard?": (
-        "Sí, puedes generar un QR con formato vCard."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con texto personalizado?": (
-        "Sí, puedes generar un QR con cualquier texto que desees."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con código de barras?": (
-        "No, solo genero códigos QR."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con NFC?": (
-        "No, Multiuso no soporta NFC."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con audio?": (
-        "Puedes generar un audio con tu presentación usando la función de texto a voz."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con video?": (
-        "No, solo puedes generar QR y memes."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con animaciones?": (
-        "No, solo puedes generar QR y memes estáticos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con efectos especiales?": (
-        "No, solo puedes generar QR y memes sencillos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con fondo personalizado?": (
-        "No, pero puedes editar la imagen generada con un editor externo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con colores personalizados?": (
-        "No, solo genero QR en blanco y negro."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con tipografía personalizada?": (
-        "No, la tipografía es estándar."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con diseño profesional?": (
-        "No, pero puedes usar la herramienta para crear una base y luego mejorarla con un diseñador."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con plantilla?": (
-        "No, pero puedes crear tu propio diseño usando memes."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato PDF?": (
-        "Puedes descargar la imagen y convertirla a PDF con otra herramienta."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato imagen?": (
-        "Sí, puedes descargar el QR o meme como imagen."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital?": (
-        "Sí, puedes compartir el QR o meme digitalmente."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato físico?": (
-        "Sí, puedes imprimir el QR o meme generado."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato web?": (
-        "Puedes generar un QR con el enlace a tu web."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato móvil?": (
-        "Sí, la aplicación es responsiva y funciona en móviles."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato social?": (
-        "Sí, puedes compartir el QR o meme en redes sociales."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato empresarial?": (
-        "Sí, puedes personalizar el texto del QR para tu empresa."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato personal?": (
-        "Sí, puedes personalizar el texto del QR para ti."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato familiar?": (
-        "Sí, puedes personalizar el texto del QR para tu familia."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato escolar?": (
-        "Sí, puedes personalizar el texto del QR para tu escuela."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato universitario?": (
-        "Sí, puedes personalizar el texto del QR para tu universidad."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato institucional?": (
-        "Sí, puedes personalizar el texto del QR para tu institución."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato profesional?": (
-        "Sí, puedes personalizar el texto del QR para tu profesión."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato creativo?": (
-        "Sí, puedes personalizar el texto del QR de forma creativa."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato innovador?": (
-        "Sí, puedes experimentar con los textos y memes."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato divertido?": (
-        "¡Sí! Usa memes y textos originales."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato elegante?": (
-        "Puedes usar textos formales y descargar el QR en alta calidad."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato sencillo?": (
-        "Sí, la herramienta es fácil de usar y los resultados son simples y efectivos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato rápido?": (
-        "Sí, puedes generar tu QR o meme en segundos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato gratuito?": (
-        "¡Sí! Todas las funciones de Multiuso son gratis."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato ilimitado?": (
-        "Sí, puedes generar tantas como quieras."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato seguro?": (
-        "Sí, tus datos no se almacenan y los archivos se eliminan periódicamente."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato privado?": (
-        "Sí, solo tú tienes acceso a los archivos que generas."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato confidencial?": (
-        "Sí, tus datos no se comparten con terceros."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato personalizado?": (
-        "Sí, puedes escribir el texto que desees en el QR."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato editable?": (
-        "Puedes editar el texto antes de generar el QR."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato exportable?": (
-        "Sí, puedes descargar la imagen y usarla donde quieras."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato imprimible?": (
-        "Sí, puedes imprimir la imagen generada."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato compartible?": (
-        "Sí, puedes compartir la imagen o el enlace generado."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato accesible?": (
-        "Sí, la aplicación es accesible desde cualquier dispositivo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato universal?": (
-        "Sí, puedes usarla desde cualquier parte del mundo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital avanzado?": (
-        "Puedes experimentar con los textos y QR para lograr resultados únicos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital básico?": (
-        "Sí, la herramienta es sencilla y directa."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital profesional?": (
-        "Puedes personalizar el texto para tu empresa o profesión."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital creativo?": (
-        "¡Sí! Usa textos originales y memes para destacar."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital divertido?": (
-        "¡Sí! Usa memes y textos graciosos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital elegante?": (
-        "Puedes usar textos formales y descargar el QR en alta calidad."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital sencillo?": (
-        "Sí, la herramienta es fácil de usar y los resultados son simples y efectivos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital rápido?": (
-        "Sí, puedes generar tu QR o meme en segundos."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital gratuito?": (
-        "¡Sí! Todas las funciones de Multiuso son gratis."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital ilimitado?": (
-        "Sí, puedes generar tantas como quieras."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital seguro?": (
-        "Sí, tus datos no se almacenan y los archivos se eliminan periódicamente."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital privado?": (
-        "Sí, solo tú tienes acceso a los archivos que generas."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital confidencial?": (
-        "Sí, tus datos no se comparten con terceros."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital personalizado?": (
-        "Sí, puedes escribir el texto que desees en el QR."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital editable?": (
-        "Puedes editar el texto antes de generar el QR."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital exportable?": (
-        "Sí, puedes descargar la imagen y usarla donde quieras."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital imprimible?": (
-        "Sí, puedes imprimir la imagen generada."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital compartible?": (
-        "Sí, puedes compartir la imagen o el enlace generado."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital accesible?": (
-        "Sí, la aplicación es accesible desde cualquier dispositivo."
-    ),
-    "¿puedo usar multiuso para hacer tarjetas de presentación con formato digital universal?": (
-        "Sí, puedes usarla desde cualquier parte del mundo."
-    ),
-    # Puedes seguir agregando más preguntas y respuestas imaginativas aquí...
-}
-
+import mysql.connector
+import re
 import unicodedata
 from markupsafe import Markup
 
-# Diccionario de links de funciones
+# --- FUNCIÓN PARA NORMALIZAR TEXTO ---
+def normalizar(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
+
+# --- CONEXIÓN Y FUNCIONES MYSQL ---
+def get_db_connection():
+    return mysql.connector.connect(
+    host="maglev.proxy.rlwy.net",   # ✅ Solo el hostname, sin puerto ni base de datos
+    port=15618,                      # ✅ Puerto aparte
+    user="root",
+    password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",  # ⚠️ Verifica que esté bien
+    database="railway"
+    )
+
+def guardar_respuesta_db(pregunta, respuesta):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "REPLACE INTO chatbot_respuestas (pregunta, respuesta) VALUES (%s, %s)",
+        (pregunta, respuesta)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def cargar_respuestas_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT pregunta, respuesta FROM chatbot_respuestas")
+    data = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {preg: resp for preg, resp in data}
+def guardar_historial_db(usuario, mensaje, respuesta):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO chatbot_historial (usuario, mensaje, respuesta) VALUES (%s, %s, %s)",
+        (usuario, mensaje, respuesta)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# --- MEMORIA EN RAM Y CARGA DESDE MYSQL ---
+chatbot_memory = {
+    "hola": "¡Hola! ¿En qué puedo ayudarte con Multiuso?",
+    # ... (todo tu diccionario original aquí) ...
+}
+try:
+    chatbot_memory.update(cargar_respuestas_db())
+except Exception as e:
+    print("No se pudo cargar la base de datos:", e)
+
+# --- LINKS DEL CHATBOT ---
 chatbot_links = {
     "qr": "/qr",
     "youtube mp3": "/youtube-mp3",
@@ -1309,13 +818,6 @@ chatbot_links = {
     "pronóstico": "/pronostico"
 }
 
-def normalizar(texto):
-    # Quita tildes y pasa a minúsculas
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', texto.lower())
-        if unicodedata.category(c) != 'Mn'
-    )
-
 def buscar_respuesta(mensaje):
     mensaje_norm = normalizar(mensaje)
     for pregunta in chatbot_memory:
@@ -1330,45 +832,104 @@ def buscar_link(mensaje):
             return link, key
     return None, None
 
+# --- LÓGICA DE OPERACIONES MATEMÁTICAS ---
+def resolver_operacion(mensaje):
+    match = re.match(r'^\s*(\d+)\s*([\+\-\*/])\s*(\d+)\s*$', mensaje)
+    if match:
+        a, op, b = match.groups()
+        a, b = int(a), int(b)
+        if op == '+':
+            return f"{a} + {b} = {a + b}"
+        elif op == '-':
+            return f"{a} - {b} = {a - b}"
+        elif op == '*':
+            return f"{a} * {b} = {a * b}"
+        elif op == '/':
+            return f"{a} / {b} = {a / b if b != 0 else 'indefinido'}"
+    return None
 @app.route('/chatbot', methods=['GET', 'POST'])
 def chatbot():
     if 'chat_history' not in session:
         session['chat_history'] = []
     if 'ultima_pregunta' not in session:
         session['ultima_pregunta'] = None
+    if 'esperando_respuesta' not in session:
+        session['esperando_respuesta'] = False
+    if 'ultima_no_sabida' not in session:
+        session['ultima_no_sabida'] = None
     respuesta = ""
     if request.method == 'POST':
         mensaje = request.form.get('mensaje', '').strip()
         session['chat_history'].append(("Tú", mensaje))
         mensaje_norm = normalizar(mensaje)
 
-        # Aprendizaje
-        if mensaje_norm.startswith("aprende:"):
+        # Si está esperando respuesta para aprender automáticamente
+        if session.get('esperando_respuesta') and not mensaje.endswith("?"):
+            pregunta = session.get('ultima_pregunta')
+            if pregunta:
+                # No guardar respuestas vacías o muy cortas
+                if len(mensaje.strip()) < 3:
+                    respuesta = "La respuesta es muy corta. Por favor, proporciona una respuesta más completa."
+                else:
+                    pregunta_norm = normalizar(pregunta)
+                    chatbot_memory[pregunta_norm] = mensaje.strip()
+                    guardar_respuesta_db(pregunta_norm, mensaje.strip())
+                    respuesta = f"He aprendido que '{pregunta}' se responde: {mensaje.strip()}"
+                    session['esperando_respuesta'] = False
+                    session['ultima_no_sabida'] = None
+            else:
+                respuesta = "No tengo ninguna pregunta pendiente para aprender."
+        # Aprendizaje manual
+        elif mensaje_norm.startswith("aprende:"):
             partes = mensaje.split(":", 1)
             if len(partes) == 2 and session.get('ultima_pregunta'):
                 pregunta = session['ultima_pregunta']
-                chatbot_memory[pregunta] = partes[1].strip()
-                respuesta = f"He aprendido que '{pregunta}' se responde: {partes[1].strip()}"
+                if len(partes[1].strip()) < 3:
+                    respuesta = "La respuesta es muy corta. Por favor, proporciona una respuesta más completa."
+                else:
+                    pregunta_norm = normalizar(pregunta)
+                    chatbot_memory[pregunta_norm] = partes[1].strip()
+                    guardar_respuesta_db(pregunta_norm, partes[1].strip())
+                    respuesta = f"He aprendido que '{pregunta}' se responde: {partes[1].strip()}"
+                    session['esperando_respuesta'] = False
+                    session['ultima_no_sabida'] = None
             else:
                 respuesta = "Primero hazme una pregunta, luego enséñame la respuesta usando: aprende:tu respuesta aquí"
         else:
+            # Lógica matemática automática
+            operacion = resolver_operacion(mensaje_norm)
+            if operacion:
+                respuesta = operacion
+                session['esperando_respuesta'] = False
+                session['ultima_no_sabida'] = None
             # Buscar link si pregunta por link
-            if "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
+            elif "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
                 link, nombre = buscar_link(mensaje)
                 if link:
                     respuesta = Markup(f"Puedes acceder a <b>{nombre.title()}</b> aquí: <a href='{link}'>Ir a {nombre.title()}</a>")
                 else:
                     respuesta = "No encontré el link que buscas. ¿Puedes especificar mejor la función?"
+                session['esperando_respuesta'] = False
+                session['ultima_no_sabida'] = None
             else:
                 # Buscar respuesta flexible
+                pregunta_norm = normalizar(mensaje)
                 respuesta_encontrada = buscar_respuesta(mensaje)
                 if respuesta_encontrada:
                     respuesta = respuesta_encontrada
+                    session['esperando_respuesta'] = False
+                    session['ultima_no_sabida'] = None
                 else:
-                    respuesta = "No sé la respuesta. ¿Quieres enseñarme? Escribe: aprende:tu respuesta aquí"
-            # Guarda la última pregunta para aprendizaje
-            session['ultima_pregunta'] = mensaje
+                    # Solo preguntar si es una pregunta nueva
+                    if session.get('ultima_no_sabida') != pregunta_norm:
+                        respuesta = "No sé la respuesta. ¿Puedes decirme cuál es?"
+                        session['esperando_respuesta'] = True
+                        session['ultima_pregunta'] = mensaje
+                        session['ultima_no_sabida'] = pregunta_norm
+                    else:
+                        respuesta = "Aún no he aprendido la respuesta a esa pregunta."
         session['chat_history'].append(("Bot", respuesta))
+        guardar_historial_db("usuario", mensaje, respuesta)
     return render_template('chatbot.html', chat_history=session['chat_history'])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
