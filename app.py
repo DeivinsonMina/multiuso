@@ -819,21 +819,18 @@ chatbot_links = {
 }
 import openai
 import difflib
+# Configura tu API Key de OpenAI
 openai.api_key = "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"
 
-# Diccionario para memorizar preguntas y respuestas
+# Memoria local para preguntas y respuestas
 chatbot_memory = {}
-
-# Diccionario para links
 chatbot_links = {
-    # ejemplo: "ayuda": "https://tusitio.com/ayuda"
+    # ejemplo: 'funcion': 'https://linkafuncion.com'
 }
 
-# Función para normalizar texto (ejemplo: todo en minúsculas, sin tildes, etc.)
 def normalizar(texto):
-    texto = texto.lower().strip()
-    # Aquí puedes añadir más normalización (quitar tildes, signos, etc.)
-    return texto
+    # función simple para normalizar texto (todo minúsculas y sin espacios extras)
+    return texto.lower().strip()
 
 def obtener_respuesta_openai(mensaje):
     try:
@@ -845,7 +842,8 @@ def obtener_respuesta_openai(mensaje):
             ],
             max_tokens=150,
             temperature=0.7,
-            n=1
+            n=1,
+            stop=None,
         )
         return response.choices[0].message['content'].strip()
     except Exception as e:
@@ -882,15 +880,6 @@ def resolver_operacion(mensaje):
             return f"{a} / {b} = {a / b if b != 0 else 'indefinido'}"
     return None
 
-# Aquí debes definir o importar las funciones de acceso a base de datos:
-def guardar_respuesta_db(pregunta_norm, respuesta):
-    # Implementa guardar en tu base de datos aquí
-    pass
-
-def guardar_historial_db(usuario, pregunta, respuesta):
-    # Implementa guardar historial en base de datos aquí
-    pass
-
 @app.route('/chatbot', methods=['GET', 'POST'])
 def chatbot():
     if 'chat_history' not in session:
@@ -917,7 +906,7 @@ def chatbot():
                 else:
                     pregunta_norm = normalizar(pregunta)
                     chatbot_memory[pregunta_norm] = mensaje.strip()
-                    guardar_respuesta_db(pregunta_norm, mensaje.strip())
+                    # Aquí puedes guardar en BD si tienes función guardar_respuesta_db()
                     respuesta = f"He aprendido que '{pregunta}' se responde: {mensaje.strip()}"
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
@@ -933,7 +922,7 @@ def chatbot():
                 else:
                     pregunta_norm = normalizar(pregunta)
                     chatbot_memory[pregunta_norm] = partes[1].strip()
-                    guardar_respuesta_db(pregunta_norm, partes[1].strip())
+                    # Aquí puedes guardar en BD
                     respuesta = f"He aprendido que '{pregunta}' se responde: {partes[1].strip()}"
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
@@ -957,21 +946,27 @@ def chatbot():
                 session['ultima_no_sabida'] = None
 
             else:
-                pregunta_norm = normalizar(mensaje)
                 respuesta_encontrada = buscar_respuesta(mensaje)
                 if respuesta_encontrada:
                     respuesta = respuesta_encontrada
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
                 else:
-                    respuesta = obtener_respuesta_openai(mensaje)
-                    chatbot_memory[pregunta_norm] = respuesta
-                    guardar_respuesta_db(pregunta_norm, respuesta)
-                    session['esperando_respuesta'] = False
-                    session['ultima_no_sabida'] = None
+                    # Aquí está la clave: llamar a OpenAI solo si la pregunta es nueva
+                    pregunta_norm = normalizar(mensaje)
+                    if session.get('ultima_no_sabida') != pregunta_norm:
+                        # Preguntar a OpenAI y guardar respuesta
+                        respuesta = obtener_respuesta_openai(mensaje)
+                        chatbot_memory[pregunta_norm] = respuesta
+                        # Aquí guardar en BD si quieres: guardar_respuesta_db(pregunta_norm, respuesta)
+                        session['esperando_respuesta'] = False
+                        session['ultima_no_sabida'] = pregunta_norm
+                    else:
+                        respuesta = "Aún no he aprendido la respuesta a esa pregunta."
 
         session['chat_history'].append(("Bot", respuesta))
-        guardar_historial_db("usuario", mensaje, respuesta)
+        # Puedes guardar historial si tienes función guardar_historial_db()
+        # guardar_historial_db("usuario", mensaje, respuesta)
 
     return render_template('chatbot.html', chat_history=session['chat_history'])
 if __name__ == "__main__":
