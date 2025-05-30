@@ -1,12 +1,9 @@
-Flask
-qrcode
-yt-dlp
-Pillow
-requests
-gtts
-pypdf
-pandas
-scikit-learn
-mysql-connector-python
-python-dotenv
-openai
+Flask==2.3.2
+qrcode==7.4.2
+yt-dlp==2023.7.6
+Pillow==10.0.0
+requests==2.31.0
+gtts==2.3.2
+pypdf==3.10.0
+mysql-connector-python==8.0.33
+openai==0.28.1  # Versión estable (evita la 1.0+ por ahora)
