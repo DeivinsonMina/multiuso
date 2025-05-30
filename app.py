@@ -753,7 +753,7 @@ def normalizar(texto):
 def get_db_connection():
     return mysql.connector.connect(
     host="maglev.proxy.rlwy.net",   # ✅ Solo el hostname, sin puerto ni base de datos
-    port=3306,                      # ✅ Puerto aparte
+    port=15618,                      # ✅ Puerto aparte
     user="root",
     password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",  # ⚠️ Verifica que esté bien
     database="railway"
