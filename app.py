@@ -753,7 +753,7 @@ def normalizar(texto):
 def get_db_connection():
     return mysql.connector.connect(
     host="maglev.proxy.rlwy.net",   # ✅ Solo el hostname, sin puerto ni base de datos
-    port=15618,                      # ✅ Puerto aparte
+    port=3306,                      # ✅ Puerto aparte
     user="root",
     password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",  # ⚠️ Verifica que esté bien
     database="railway"
@@ -818,12 +818,16 @@ chatbot_links = {
     "pronóstico": "/pronostico"
 }
 
-def buscar_respuesta(mensaje):
+import difflib
+
+def buscar_respuesta(mensaje, umbral=0.6):
     mensaje_norm = normalizar(mensaje)
-    for pregunta in chatbot_memory:
-        if normalizar(pregunta) in mensaje_norm or mensaje_norm in normalizar(pregunta):
-            return chatbot_memory[pregunta]
+    preguntas = list(chatbot_memory.keys())
+    coincidencias = difflib.get_close_matches(mensaje_norm, preguntas, n=1, cutoff=umbral)
+    if coincidencias:
+        return chatbot_memory[coincidencias[0]]
     return None
+
 
 def buscar_link(mensaje):
     mensaje_norm = normalizar(mensaje)
