@@ -817,10 +817,8 @@ chatbot_links = {
     "facebook": "/facebook",
     "pronóstico": "/pronostico"
 }
-import re
 import openai
 import difflib
-from flask import Flask, request, session, render_template, Markup
 openai.api_key = "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"
 
 # Diccionario para memorizar preguntas y respuestas
