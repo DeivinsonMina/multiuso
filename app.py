@@ -817,9 +817,25 @@ chatbot_links = {
     "facebook": "/facebook",
     "pronóstico": "/pronostico"
 }
+import re
 import openai
 import difflib
-openai.api_key ="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"
+from flask import Flask, request, session, render_template, Markup
+openai.api_key = "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"
+
+# Diccionario para memorizar preguntas y respuestas
+chatbot_memory = {}
+
+# Diccionario para links
+chatbot_links = {
+    # ejemplo: "ayuda": "https://tusitio.com/ayuda"
+}
+
+# Función para normalizar texto (ejemplo: todo en minúsculas, sin tildes, etc.)
+def normalizar(texto):
+    texto = texto.lower().strip()
+    # Aquí puedes añadir más normalización (quitar tildes, signos, etc.)
+    return texto
 
 def obtener_respuesta_openai(mensaje):
     try:
@@ -831,8 +847,7 @@ def obtener_respuesta_openai(mensaje):
             ],
             max_tokens=150,
             temperature=0.7,
-            n=1,
-            stop=None,
+            n=1
         )
         return response.choices[0].message['content'].strip()
     except Exception as e:
@@ -847,7 +862,6 @@ def buscar_respuesta(mensaje, umbral=0.6):
         return chatbot_memory[coincidencias[0]]
     return None
 
-
 def buscar_link(mensaje):
     mensaje_norm = normalizar(mensaje)
     for key, link in chatbot_links.items():
@@ -855,7 +869,6 @@ def buscar_link(mensaje):
             return link, key
     return None, None
 
-# --- LÓGICA DE OPERACIONES MATEMÁTICAS ---
 def resolver_operacion(mensaje):
     match = re.match(r'^\s*(\d+)\s*([\+\-\*/])\s*(\d+)\s*$', mensaje)
     if match:
@@ -870,6 +883,16 @@ def resolver_operacion(mensaje):
         elif op == '/':
             return f"{a} / {b} = {a / b if b != 0 else 'indefinido'}"
     return None
+
+# Aquí debes definir o importar las funciones de acceso a base de datos:
+def guardar_respuesta_db(pregunta_norm, respuesta):
+    # Implementa guardar en tu base de datos aquí
+    pass
+
+def guardar_historial_db(usuario, pregunta, respuesta):
+    # Implementa guardar historial en base de datos aquí
+    pass
+
 @app.route('/chatbot', methods=['GET', 'POST'])
 def chatbot():
     if 'chat_history' not in session:
@@ -888,7 +911,6 @@ def chatbot():
         session['chat_history'].append(("Tú", mensaje))
         mensaje_norm = normalizar(mensaje)
 
-        # Si está esperando respuesta para aprender automáticamente
         if session.get('esperando_respuesta') and not mensaje.endswith("?"):
             pregunta = session.get('ultima_pregunta')
             if pregunta:
@@ -904,7 +926,6 @@ def chatbot():
             else:
                 respuesta = "No tengo ninguna pregunta pendiente para aprender."
 
-        # Aprendizaje manual
         elif mensaje_norm.startswith("aprende:"):
             partes = mensaje.split(":", 1)
             if len(partes) == 2 and session.get('ultima_pregunta'):
@@ -922,14 +943,12 @@ def chatbot():
                 respuesta = "Primero hazme una pregunta, luego enséñame la respuesta usando: aprende:tu respuesta aquí"
 
         else:
-            # Lógica matemática automática
             operacion = resolver_operacion(mensaje_norm)
             if operacion:
                 respuesta = operacion
                 session['esperando_respuesta'] = False
                 session['ultima_no_sabida'] = None
 
-            # Buscar link si pregunta por link
             elif "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
                 link, nombre = buscar_link(mensaje)
                 if link:
@@ -940,7 +959,6 @@ def chatbot():
                 session['ultima_no_sabida'] = None
 
             else:
-                # Buscar respuesta flexible
                 pregunta_norm = normalizar(mensaje)
                 respuesta_encontrada = buscar_respuesta(mensaje)
                 if respuesta_encontrada:
@@ -948,9 +966,7 @@ def chatbot():
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
                 else:
-                    # RESPONDER CON OPENAI cuando no hay respuesta local
                     respuesta = obtener_respuesta_openai(mensaje)
-                    # Guardar respuesta para futuras consultas
                     chatbot_memory[pregunta_norm] = respuesta
                     guardar_respuesta_db(pregunta_norm, respuesta)
                     session['esperando_respuesta'] = False
