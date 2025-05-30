@@ -819,7 +819,7 @@ chatbot_links = {
 }
 import openai
 import difflib
-openai.api_key = os.getenv("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")
+openai.api_key ="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"
 
 def obtener_respuesta_openai(mensaje):
     try:
