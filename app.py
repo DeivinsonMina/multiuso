@@ -820,7 +820,7 @@ chatbot_links = {
 import openai
 import difflib
 # Configura tu API Key de OpenAI
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Memoria local para preguntas y respuestas
 chatbot_memory = {}
