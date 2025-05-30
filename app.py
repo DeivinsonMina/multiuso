@@ -741,6 +741,11 @@ import mysql.connector
 import re
 import unicodedata
 from markupsafe import Markup
+import openai
+import difflib
+# Configura tu API Key de OpenAI
+openai.api_key = "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"
+
 
 # --- FUNCIÓN PARA NORMALIZAR TEXTO ---
 def normalizar(texto):
@@ -748,6 +753,23 @@ def normalizar(texto):
         c for c in unicodedata.normalize('NFD', texto.lower())
         if unicodedata.category(c) != 'Mn'
     )
+    def obtener_respuesta_openai(mensaje):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente útil."},
+                {"role": "user", "content": mensaje}
+            ],
+            max_tokens=150,
+            temperature=0.7,
+            n=1,
+            stop=None,
+        )
+        return response.choices[0].message['content'].strip()
+    except Exception as e:
+        print("Error al llamar a OpenAI:", e)
+        return "Lo siento, tuve un problema al procesar tu solicitud."
 
 # --- CONEXIÓN Y FUNCIONES MYSQL ---
 def get_db_connection():
@@ -817,38 +839,9 @@ chatbot_links = {
     "facebook": "/facebook",
     "pronóstico": "/pronostico"
 }
-import openai
-import difflib
-# Configura tu API Key de OpenAI
-openai.api_key = "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"
 
-# Memoria local para preguntas y respuestas
-chatbot_memory = {}
-chatbot_links = {
-    # ejemplo: 'funcion': 'https://linkafuncion.com'
-}
 
-def normalizar(texto):
-    # función simple para normalizar texto (todo minúsculas y sin espacios extras)
-    return texto.lower().strip()
 
-def obtener_respuesta_openai(mensaje):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Eres un asistente útil."},
-                {"role": "user", "content": mensaje}
-            ],
-            max_tokens=150,
-            temperature=0.7,
-            n=1,
-            stop=None,
-        )
-        return response.choices[0].message['content'].strip()
-    except Exception as e:
-        print("Error al llamar a OpenAI:", e)
-        return "Lo siento, tuve un problema al procesar tu solicitud."
 
 def buscar_respuesta(mensaje, umbral=0.6):
     mensaje_norm = normalizar(mensaje)
