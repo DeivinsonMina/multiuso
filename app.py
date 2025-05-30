@@ -17,9 +17,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 import io
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'supersecreto123'
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 @app.route('/descargar-rockyou')
 def descargar_rockyou():
     try:
@@ -744,8 +746,11 @@ from markupsafe import Markup
 import openai
 import difflib
 # Configura tu API Key de OpenAI
-openai.api_key = "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"
+# Cargar variables de entorno desde .env
 
+
+# Configura tu API Key de OpenAI de forma segura
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # --- FUNCIÓN PARA NORMALIZAR TEXTO ---
 def normalizar(texto):
@@ -753,7 +758,9 @@ def normalizar(texto):
         c for c in unicodedata.normalize('NFD', texto.lower())
         if unicodedata.category(c) != 'Mn'
     )
-    def obtener_respuesta_openai(mensaje):
+
+# --- FUNCIÓN PARA OBTENER RESPUESTA DE OPENAI ---
+def obtener_respuesta_openai(mensaje):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -763,10 +770,12 @@ def normalizar(texto):
             ],
             max_tokens=150,
             temperature=0.7,
-            n=1,
-            stop=None,
+            n=1
         )
-        return response.choices[0].message['content'].strip()
+        if response.choices and response.choices[0].message:
+            return response.choices[0].message['content'].strip()
+        else:
+            return "Lo siento, no pude generar una respuesta válida."
     except Exception as e:
         print("Error al llamar a OpenAI:", e)
         return "Lo siento, tuve un problema al procesar tu solicitud."
@@ -774,23 +783,24 @@ def normalizar(texto):
 # --- CONEXIÓN Y FUNCIONES MYSQL ---
 def get_db_connection():
     return mysql.connector.connect(
-    host="maglev.proxy.rlwy.net",   # ✅ Solo el hostname, sin puerto ni base de datos
-    port=15618,                      # ✅ Puerto aparte
-    user="root",
-    password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",  # ⚠️ Verifica que esté bien
-    database="railway"
+        host=os.getenv("DB_HOST"),
+        port=int(os.getenv("DB_PORT")),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
 
 def guardar_respuesta_db(pregunta, respuesta):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "REPLACE INTO chatbot_respuestas (pregunta, respuesta) VALUES (%s, %s)",
-        (pregunta, respuesta)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
+    if respuesta:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "REPLACE INTO chatbot_respuestas (pregunta, respuesta) VALUES (%s, %s)",
+            (pregunta, respuesta)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
 
 def cargar_respuestas_db():
     conn = get_db_connection()
@@ -800,6 +810,7 @@ def cargar_respuestas_db():
     cur.close()
     conn.close()
     return {preg: resp for preg, resp in data}
+
 def guardar_historial_db(usuario, mensaje, respuesta):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -813,15 +824,14 @@ def guardar_historial_db(usuario, mensaje, respuesta):
 
 # --- MEMORIA EN RAM Y CARGA DESDE MYSQL ---
 chatbot_memory = {
-    "hola": "¡Hola! ¿En qué puedo ayudarte con Multiuso?",
-    # ... (todo tu diccionario original aquí) ...
+    "hola": "¡Hola! ¿En qué puedo ayudarte con Multiuso?"
 }
 try:
     chatbot_memory.update(cargar_respuestas_db())
 except Exception as e:
     print("No se pudo cargar la base de datos:", e)
 
-# --- LINKS DEL CHATBOT ---
+# --- ENLACES ---
 chatbot_links = {
     "qr": "/qr",
     "youtube mp3": "/youtube-mp3",
@@ -840,9 +850,7 @@ chatbot_links = {
     "pronóstico": "/pronostico"
 }
 
-
-
-
+# --- FUNCIONES DE RESPUESTA ---
 def buscar_respuesta(mensaje, umbral=0.6):
     mensaje_norm = normalizar(mensaje)
     preguntas = list(chatbot_memory.keys())
@@ -863,15 +871,13 @@ def resolver_operacion(mensaje):
     if match:
         a, op, b = match.groups()
         a, b = int(a), int(b)
-        if op == '+':
-            return f"{a} + {b} = {a + b}"
-        elif op == '-':
-            return f"{a} - {b} = {a - b}"
-        elif op == '*':
-            return f"{a} * {b} = {a * b}"
-        elif op == '/':
-            return f"{a} / {b} = {a / b if b != 0 else 'indefinido'}"
+        if op == '+': return f"{a} + {b} = {a + b}"
+        if op == '-': return f"{a} - {b} = {a - b}"
+        if op == '*': return f"{a} * {b} = {a * b}"
+        if op == '/': return f"{a} / {b} = {a / b if b != 0 else 'indefinido'}"
     return None
+
+# --- RUTA DEL CHATBOT COMPLETA Y MEJORADA ---
 
 @app.route('/chatbot', methods=['GET', 'POST'])
 def chatbot():
@@ -891,6 +897,7 @@ def chatbot():
         session['chat_history'].append(("Tú", mensaje))
         mensaje_norm = normalizar(mensaje)
 
+        # --- Modo aprendizaje ---
         if session.get('esperando_respuesta') and not mensaje.endswith("?"):
             pregunta = session.get('ultima_pregunta')
             if pregunta:
@@ -899,7 +906,7 @@ def chatbot():
                 else:
                     pregunta_norm = normalizar(pregunta)
                     chatbot_memory[pregunta_norm] = mensaje.strip()
-                    # Aquí puedes guardar en BD si tienes función guardar_respuesta_db()
+                    guardar_respuesta_db(pregunta_norm, mensaje.strip())
                     respuesta = f"He aprendido que '{pregunta}' se responde: {mensaje.strip()}"
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
@@ -915,13 +922,14 @@ def chatbot():
                 else:
                     pregunta_norm = normalizar(pregunta)
                     chatbot_memory[pregunta_norm] = partes[1].strip()
-                    # Aquí puedes guardar en BD
+                    guardar_respuesta_db(pregunta_norm, partes[1].strip())
                     respuesta = f"He aprendido que '{pregunta}' se responde: {partes[1].strip()}"
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
             else:
                 respuesta = "Primero hazme una pregunta, luego enséñame la respuesta usando: aprende:tu respuesta aquí"
 
+        # --- Operaciones matemáticas ---
         else:
             operacion = resolver_operacion(mensaje_norm)
             if operacion:
@@ -929,7 +937,8 @@ def chatbot():
                 session['esperando_respuesta'] = False
                 session['ultima_no_sabida'] = None
 
-            elif "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
+            # --- Buscar enlaces ---
+            elif any(x in mensaje_norm for x in ["link", "enlace", "ir a"]):
                 link, nombre = buscar_link(mensaje)
                 if link:
                     respuesta = Markup(f"Puedes acceder a <b>{nombre.title()}</b> aquí: <a href='{link}'>Ir a {nombre.title()}</a>")
@@ -938,6 +947,7 @@ def chatbot():
                 session['esperando_respuesta'] = False
                 session['ultima_no_sabida'] = None
 
+            # --- Respuesta basada en memoria o IA ---
             else:
                 respuesta_encontrada = buscar_respuesta(mensaje)
                 if respuesta_encontrada:
@@ -945,23 +955,30 @@ def chatbot():
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
                 else:
-                    # Aquí está la clave: llamar a OpenAI solo si la pregunta es nueva
                     pregunta_norm = normalizar(mensaje)
                     if session.get('ultima_no_sabida') != pregunta_norm:
-                        # Preguntar a OpenAI y guardar respuesta
+                        session['ultima_pregunta'] = mensaje
                         respuesta = obtener_respuesta_openai(mensaje)
-                        chatbot_memory[pregunta_norm] = respuesta
-                        # Aquí guardar en BD si quieres: guardar_respuesta_db(pregunta_norm, respuesta)
-                        session['esperando_respuesta'] = False
-                        session['ultima_no_sabida'] = pregunta_norm
-                    else:
-                        respuesta = "Aún no he aprendido la respuesta a esa pregunta."
 
+                        if respuesta and not respuesta.lower().startswith("lo siento"):
+                            chatbot_memory[pregunta_norm] = respuesta
+                            guardar_respuesta_db(pregunta_norm, respuesta)
+                            session['esperando_respuesta'] = False
+                            session['ultima_no_sabida'] = None
+                        else:
+                            respuesta = "No tengo una respuesta en este momento. ¿Quieres enseñármela tú?"
+                            session['esperando_respuesta'] = True
+                            session['ultima_no_sabida'] = pregunta_norm
+                    else:
+                        respuesta = "Sigo sin saber la respuesta. Puedes enseñármela escribiéndola o usando: aprende:respuesta"
+
+        # --- Guardar historial y mostrar ---
         session['chat_history'].append(("Bot", respuesta))
-        # Puedes guardar historial si tienes función guardar_historial_db()
-        # guardar_historial_db("usuario", mensaje, respuesta)
+        guardar_historial_db("usuario", mensaje, respuesta)
 
     return render_template('chatbot.html', chat_history=session['chat_history'])
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

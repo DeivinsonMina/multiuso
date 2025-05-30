@@ -1,0 +1,44 @@
+# Entorno virtual de Python (¡SIEMPRE ignóralo!)
+venv/
+.env/
+.venv/
+env/
+
+# Archivos de configuración sensible (claves, credenciales)
+.env
+*.env
+.env.local
+secrets.json
+config.json
+credentials.py
+
+# Cache y archivos compilados de Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Logs y bases de datos locales
+*.log
+*.sqlite3
+*.db
+
+# Archivos generados por IDEs/Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store  # (macOS)
+
+# Paquetes y builds de Python
+dist/
+build/
+*.egg-info/
+pip-wheel-metadata/
+
+# Archivos de Jupyter Notebook (opcional)
+.ipynb_checkpoints/
+*.ipynb
+
+# Otros
+/tmp/
