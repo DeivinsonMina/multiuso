@@ -817,8 +817,27 @@ chatbot_links = {
     "facebook": "/facebook",
     "pronóstico": "/pronostico"
 }
-
+import openai
 import difflib
+openai.api_key = os.getenv("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")
+
+def obtener_respuesta_openai(mensaje):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente útil."},
+                {"role": "user", "content": mensaje}
+            ],
+            max_tokens=150,
+            temperature=0.7,
+            n=1,
+            stop=None,
+        )
+        return response.choices[0].message['content'].strip()
+    except Exception as e:
+        print("Error al llamar a OpenAI:", e)
+        return "Lo siento, tuve un problema al procesar tu solicitud."
 
 def buscar_respuesta(mensaje, umbral=0.6):
     mensaje_norm = normalizar(mensaje)
@@ -861,7 +880,9 @@ def chatbot():
         session['esperando_respuesta'] = False
     if 'ultima_no_sabida' not in session:
         session['ultima_no_sabida'] = None
+
     respuesta = ""
+
     if request.method == 'POST':
         mensaje = request.form.get('mensaje', '').strip()
         session['chat_history'].append(("Tú", mensaje))
@@ -871,7 +892,6 @@ def chatbot():
         if session.get('esperando_respuesta') and not mensaje.endswith("?"):
             pregunta = session.get('ultima_pregunta')
             if pregunta:
-                # No guardar respuestas vacías o muy cortas
                 if len(mensaje.strip()) < 3:
                     respuesta = "La respuesta es muy corta. Por favor, proporciona una respuesta más completa."
                 else:
@@ -883,6 +903,7 @@ def chatbot():
                     session['ultima_no_sabida'] = None
             else:
                 respuesta = "No tengo ninguna pregunta pendiente para aprender."
+
         # Aprendizaje manual
         elif mensaje_norm.startswith("aprende:"):
             partes = mensaje.split(":", 1)
@@ -899,6 +920,7 @@ def chatbot():
                     session['ultima_no_sabida'] = None
             else:
                 respuesta = "Primero hazme una pregunta, luego enséñame la respuesta usando: aprende:tu respuesta aquí"
+
         else:
             # Lógica matemática automática
             operacion = resolver_operacion(mensaje_norm)
@@ -906,6 +928,7 @@ def chatbot():
                 respuesta = operacion
                 session['esperando_respuesta'] = False
                 session['ultima_no_sabida'] = None
+
             # Buscar link si pregunta por link
             elif "link" in mensaje_norm or "enlace" in mensaje_norm or "ir a" in mensaje_norm:
                 link, nombre = buscar_link(mensaje)
@@ -915,6 +938,7 @@ def chatbot():
                     respuesta = "No encontré el link que buscas. ¿Puedes especificar mejor la función?"
                 session['esperando_respuesta'] = False
                 session['ultima_no_sabida'] = None
+
             else:
                 # Buscar respuesta flexible
                 pregunta_norm = normalizar(mensaje)
@@ -924,16 +948,17 @@ def chatbot():
                     session['esperando_respuesta'] = False
                     session['ultima_no_sabida'] = None
                 else:
-                    # Solo preguntar si es una pregunta nueva
-                    if session.get('ultima_no_sabida') != pregunta_norm:
-                        respuesta = "No sé la respuesta. ¿Puedes decirme cuál es?"
-                        session['esperando_respuesta'] = True
-                        session['ultima_pregunta'] = mensaje
-                        session['ultima_no_sabida'] = pregunta_norm
-                    else:
-                        respuesta = "Aún no he aprendido la respuesta a esa pregunta."
+                    # RESPONDER CON OPENAI cuando no hay respuesta local
+                    respuesta = obtener_respuesta_openai(mensaje)
+                    # Guardar respuesta para futuras consultas
+                    chatbot_memory[pregunta_norm] = respuesta
+                    guardar_respuesta_db(pregunta_norm, respuesta)
+                    session['esperando_respuesta'] = False
+                    session['ultima_no_sabida'] = None
+
         session['chat_history'].append(("Bot", respuesta))
         guardar_historial_db("usuario", mensaje, respuesta)
+
     return render_template('chatbot.html', chat_history=session['chat_history'])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
