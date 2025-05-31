@@ -1,9 +1,12 @@
 Flask==2.3.2
 qrcode==7.4.2
-yt-dlp==2023.7.6
-Pillow==10.0.0
+yt-dlp==2023.11.16
+Pillow==10.1.0
 requests==2.31.0
-gtts==2.3.2
-pypdf==3.10.0
-mysql-connector-python==8.0.33
-openai==0.28.1  # Versión estable (evita la 1.0+ por ahora)
+gtts==2.4.0
+pypdf==3.17.0
+pandas==2.1.4  # Versión ligera (evita 1.x)
+scikit-learn==1.3.2  # Compatible con pandas 2.x
+mysql-connector-python==8.1.0
+python-dotenv==1.0.0  # Solo para desarrollo local
+openai==0.28.1  # Versión estable (la 1.x requiere cambios de código)
