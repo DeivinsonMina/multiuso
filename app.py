@@ -22,7 +22,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+# Configurar clave secreta para sesiones
+secret_key = os.getenv("FLASK_SECRET_KEY")
+
+if not secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY no está configurada en las variables de entorno.")
+app.secret_key = secret_key
 app.debug = True
 @app.route('/descargar-rockyou')
 def descargar_rockyou():
