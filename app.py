@@ -792,6 +792,22 @@ def get_db_connection():
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
+        # Validar que todas las variables estén definidas
+    if not all([host, port, user, password, database]):
+        raise RuntimeError(f"Una o más variables de entorno no están definidas:\n"
+                           f"DB_HOST={host}, DB_PORT={port}, DB_USER={user}, DB_PASSWORD={'***' if password else None}, DB_NAME={database}")
+
+    try:
+        return mysql.connector.connect(
+            host=host,
+            port=int(port),
+            user=user,
+            password=password,
+            database=database
+        )
+    except Exception as e:
+        print("Error al conectar a la base de datos:", e)
+        raise
 
 def guardar_respuesta_db(pregunta, respuesta):
     if respuesta:
