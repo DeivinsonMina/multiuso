@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
 app.debug = True
 @app.route('/descargar-rockyou')
 def descargar_rockyou():
