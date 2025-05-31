@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, url_for, redirect, send_file, session
 import os
+import secrets
 import qrcode
 import yt_dlp
 import re
