@@ -786,11 +786,11 @@ def obtener_respuesta_openai(mensaje):
 # --- CONEXIÓN Y FUNCIONES MYSQL ---
 def get_db_connection():
     return mysql.connector.connect(
-        host=maglev.proxy.rlwy.net,
+        host="maglev.proxy.rlwy.net",
         port=3306,
-        user=root,
-        password=MirjdyuNWahcpRbjmnRiqhMipzLaEQzd,
-        database=railway
+        user="root",
+        password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",
+        database="railway"
     )
         # Validar que todas las variables estén definidas
     if not all([host, port, user, password, database]):
