@@ -1,12 +1,12 @@
-Flask==2.3.2
-qrcode==7.4.2
-yt-dlp==2023.11.16
-Pillow==10.1.0
-requests==2.31.0
-gtts==2.4.0
-pypdf==3.17.0
-pandas==2.1.4
-scikit-learn==1.3.2
-mysql-connector-python==8.1.0
-python-dotenv==1.0.0
-openai>=0.28.1,<1.0.0  # Estable y sin necesidad de reescribir código
+Flask
+qrcode
+yt-dlp
+Pillow
+requests
+gtts
+pypdf
+pandas
+scikit-learn
+mysql-connector-python
+python-dotenv
+openai
