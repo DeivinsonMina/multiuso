@@ -787,7 +787,7 @@ def obtener_respuesta_openai(mensaje):
 def get_db_connection():
     return mysql.connector.connect(
         host="maglev.proxy.rlwy.net",
-        port=3306,
+        port=15618,
         user="root",
         password="MirjdyuNWahcpRbjmnRiqhMipzLaEQzd",
         database="railway"
